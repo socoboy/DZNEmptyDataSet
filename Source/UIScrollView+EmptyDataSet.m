@@ -37,6 +37,7 @@
 
 @property (nonatomic, assign) CGFloat verticalOffset;
 @property (nonatomic, assign) CGFloat verticalSpace;
+@property (nonatomic, assign) BOOL customViewShouldPinToTopLayout;
 
 @property (nonatomic, assign) BOOL fadeInOnDisplay;
 
@@ -283,6 +284,13 @@ static char const * const kEmptyDataSetView =       "emptyDataSetView";
     return 0.0;
 }
 
+- (BOOL)dzn_customViewShouldPinToTopLayout {
+    if (self.emptyDataSetSource && [self.emptyDataSetSource respondsToSelector:@selector(customViewShouldPinToTopLayout:)]) {
+        return [self.emptyDataSetSource customViewShouldPinToTopLayout:self];
+    }
+    return NO;
+}
+
 
 #pragma mark - Delegate Getters & Events (Private)
 
@@ -521,6 +529,7 @@ static char const * const kEmptyDataSetView =       "emptyDataSetView";
         
         // Configure offset
         view.verticalOffset = [self dzn_verticalOffset];
+        view.customViewShouldPinToTopLayout = [self dzn_customViewShouldPinToTopLayout];
         
         // Configure the empty dataset view
         view.backgroundColor = [self dzn_dataSetBackgroundColor];
@@ -936,6 +945,25 @@ Class dzn_baseClassToSwizzleForTarget(id target)
     if (_customView) {
         [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[customView]|" options:0 metrics:nil views:@{@"customView":_customView}]];
         [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[customView]|" options:0 metrics:nil views:@{@"customView":_customView}]];
+        if (self.customViewShouldPinToTopLayout) {
+            NSLayoutConstraint *topContentVSCustomConstraint = [NSLayoutConstraint constraintWithItem:_customView
+                                                                             attribute:NSLayoutAttributeTop
+                                                                             relatedBy:NSLayoutRelationEqual
+                                                                                toItem:self.contentView
+                                                                             attribute:NSLayoutAttributeTop
+                                                                            multiplier:1.0
+                                                                              constant:0.0];
+            [self.contentView addConstraint:topContentVSCustomConstraint];
+            
+            NSLayoutConstraint *topContentVSSelfConstraint = [NSLayoutConstraint constraintWithItem:self.contentView
+                                                                                    attribute:NSLayoutAttributeTop
+                                                                                    relatedBy:NSLayoutRelationEqual
+                                                                                       toItem:self
+                                                                                    attribute:NSLayoutAttributeTop
+                                                                                   multiplier:1.0
+                                                                                     constant:0.0];
+            [self addConstraint:topContentVSSelfConstraint];
+        }
     }
     else {
         CGFloat width = CGRectGetWidth(self.frame) ? : CGRectGetWidth([UIScreen mainScreen].bounds);

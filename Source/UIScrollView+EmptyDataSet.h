@@ -155,6 +155,8 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (CGFloat)spaceHeightForEmptyDataSet:(UIScrollView *)scrollView;
 
+- (BOOL)customViewShouldPinToTopLayout:(UIScrollView *)scrollView;
+
 @end
 
 
